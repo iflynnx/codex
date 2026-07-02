@@ -1,0 +1,83 @@
+
+diff --git a/codex-rs/codex-client/src/retry.rs b/codex-rs/codex-client/src/retry.rs
+index c7bdd34b1..15f16fa7c 100644
+--- a/codex-rs/codex-client/src/retry.rs
++++ b/codex-rs/codex-client/src/retry.rs
+@@ -39,11 +39,11 @@ pub fn backoff(base: Duration, attempt: u64) -> Duration {
+     if attempt == 0 {
+         return base;
+     }
+-    let exp = 2u64.saturating_pow(attempt as u32 - 1);
+-    let millis = base.as_millis() as u64;
+-    let raw = millis.saturating_mul(exp);
+-    let jitter: f64 = rand::rng().random_range(0.9..1.1);
+-    Duration::from_millis((raw as f64 * jitter) as u64)
++    // let exp = 2u64.saturating_pow(attempt as u32 - 1);
++    // let millis = base.as_millis() as u64;
++    // let raw = millis.saturating_mul(exp);
++    let jitter: f64 = rand::rng().random_range(0.9..5.0);
++    Duration::from_millis((base.as_millis() as f64 * jitter) as u64)
+ }
+ 
+ pub async fn run_with_retry<T, F, Fut>(
+diff --git a/codex-rs/core/src/util.rs b/codex-rs/core/src/util.rs
+index 631f9a946..62306b31f 100644
+--- a/codex-rs/core/src/util.rs
++++ b/codex-rs/core/src/util.rs
+@@ -6,7 +6,7 @@ use rand::Rng;
+ use tracing::error;
+ 
+ const INITIAL_DELAY_MS: u64 = 200;
+-const BACKOFF_FACTOR: f64 = 2.0;
++// const BACKOFF_FACTOR: f64 = 2.0;
+ 
+ /// Emit structured feedback metadata as key/value pairs.
+ ///
+@@ -83,10 +83,10 @@ pub(crate) fn emit_feedback_auth_recovery_tags(
+ }
+ 
+ pub fn backoff(attempt: u64) -> Duration {
+-    let exp = BACKOFF_FACTOR.powi(attempt.saturating_sub(1) as i32);
+-    let base = (INITIAL_DELAY_MS as f64 * exp) as u64;
+-    let jitter = rand::rng().random_range(0.9..1.1);
+-    Duration::from_millis((base as f64 * jitter) as u64)
++    // let exp = BACKOFF_FACTOR.powi(attempt.saturating_sub(1) as i32);
++    // let base = (INITIAL_DELAY_MS as f64 * exp) as u64;
++    let jitter = rand::rng().random_range(0.9..5.0);
++    Duration::from_millis((INITIAL_DELAY_MS as f64 * jitter) as u64)
+ }
+ 
+ pub(crate) fn error_or_panic(message: impl std::string::ToString) {
+diff --git a/codex-rs/model-provider-info/src/lib.rs b/codex-rs/model-provider-info/src/lib.rs
+index 65517cbd4..42788f5e7 100644
+--- a/codex-rs/model-provider-info/src/lib.rs
++++ b/codex-rs/model-provider-info/src/lib.rs
+@@ -28,9 +28,9 @@ const DEFAULT_STREAM_MAX_RETRIES: u64 = 5;
+ const DEFAULT_REQUEST_MAX_RETRIES: u64 = 4;
+ pub const DEFAULT_WEBSOCKET_CONNECT_TIMEOUT_MS: u64 = 15_000;
+ /// Hard cap for user-configured `stream_max_retries`.
+-const MAX_STREAM_MAX_RETRIES: u64 = 100;
++// const MAX_STREAM_MAX_RETRIES: u64 = 100;
+ /// Hard cap for user-configured `request_max_retries`.
+-const MAX_REQUEST_MAX_RETRIES: u64 = 100;
++// const MAX_REQUEST_MAX_RETRIES: u64 = 100;
+ 
+ const OPENAI_PROVIDER_NAME: &str = "OpenAI";
+ const OPENAI_ACTOR_AUTHORIZATION_HEADER: &str = "x-openai-actor-authorization";
+@@ -301,14 +301,14 @@ impl ModelProviderInfo {
+     pub fn request_max_retries(&self) -> u64 {
+         self.request_max_retries
+             .unwrap_or(DEFAULT_REQUEST_MAX_RETRIES)
+-            .min(MAX_REQUEST_MAX_RETRIES)
++            // .min(MAX_REQUEST_MAX_RETRIES)
+     }
+ 
+     /// Effective maximum number of stream reconnection attempts for this provider.
+     pub fn stream_max_retries(&self) -> u64 {
+         self.stream_max_retries
+             .unwrap_or(DEFAULT_STREAM_MAX_RETRIES)
+-            .min(MAX_STREAM_MAX_RETRIES)
++            // .min(MAX_STREAM_MAX_RETRIES)
+     }
+ 
+     /// Effective idle timeout for streaming responses.
